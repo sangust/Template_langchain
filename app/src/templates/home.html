@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interface de Chat IA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Ícones Lucide -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="flex flex-col h-screen bg-white text-gray-900 font-sans">
+
+  <!-- Área Principal de Mensagens -->
+  <main class="flex-1 overflow-y-auto" id="chat-container">
+    <div class="max-w-3xl mx-auto w-full px-4 pt-12 pb-36 flex flex-col gap-8" id="messages-list">
+      
+      <!-- Mensagem Inicial -->
+      <div id="welcome-message" class="flex flex-col items-center justify-center h-[50vh] text-center">
+        <h1 class="text-2xl font-semibold text-gray-800 mb-2">Como posso ajudar hoje?</h1>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Área de Input Fixa no Rodapé -->
+  <div class="fixed bottom-0 w-full bg-gradient-to-t from-white via-white to-transparent pt-10 pb-6 px-4">
+    <div class="max-w-3xl mx-auto w-full relative">
+      <form id="chat-form" class="relative flex items-end bg-gray-50 border border-gray-200 rounded-3xl overflow-hidden focus-within:ring-1 focus-within:ring-gray-300 focus-within:bg-white transition-all shadow-sm">
+        <textarea
+          id="chat-input"
+          placeholder="Envie uma mensagem ao modelo..."
+          rows="1"
+          class="w-full max-h-48 bg-transparent pl-5 pr-14 py-4 outline-none text-gray-800 placeholder-gray-500 resize-none disabled:opacity-50"
+          style="min-height: 56px;"
+        ></textarea>
+        <button
+          type="submit"
+          id="submit-button"
+          disabled
+          class="absolute right-3 bottom-3 p-2 bg-black text-white rounded-full hover:bg-gray-800 disabled:bg-gray-300 disabled:text-gray-500 transition-colors flex items-center justify-center"
+        >
+          <i data-lucide="arrow-up" class="w-4 h-4"></i>
+        </button>
+      </form>
+      <div class="text-center text-xs text-gray-400 mt-3">
+        A IA pode cometer erros. Verifique informações importantes.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Inicializar ícones
+    lucide.createIcons();
+
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('chat-input');
+    const submitBtn = document.getElementById('submit-button');
+    const messagesList = document.getElementById('messages-list');
+    const welcomeMessage = document.getElementById('welcome-message');
+    const chatContainer = document.getElementById('chat-container');
+    
+    let isLoading = false;
+
+    // Ajuste de estado do botão
+    input.addEventListener('input', () => {
+      submitBtn.disabled = !input.value.trim() || isLoading;
+    });
+
+    // Submeter com Enter (sem Shift)
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (!submitBtn.disabled) {
+          form.dispatchEvent(new Event('submit'));
+        }
+      }
+    });
+
+    function scrollToBottom() {
+      chatContainer.scrollTo({
+        top: chatContainer.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+
+    function createMessageElement(role, text) {
+      const div = document.createElement('div');
+      div.className = `flex w-full ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+      
+      if (role === 'user') {
+        div.innerHTML = `
+          <div class="bg-gray-100 text-gray-900 px-5 py-3 rounded-3xl max-w-[80%] break-words">
+            ${escapeHTML(text)}
+          </div>
+        `;
+      } else {
+        div.innerHTML = `
+          <div class="w-full max-w-3xl text-gray-800 leading-relaxed whitespace-pre-wrap break-words px-2">
+            ${escapeHTML(text)}
+          </div>
+        `;
+      }
+      return div;
+    }
+
+    function createLoadingElement() {
+      const div = document.createElement('div');
+      div.id = 'loading-indicator';
+      div.className = 'flex w-full justify-start px-2';
+      div.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin text-gray-400"></i>`;
+      return div;
+    }
+
+    function escapeHTML(str) {
+      return str.replace(/[&<>'"]/g, 
+        tag => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+        }[tag] || tag)
+      );
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const userMessage = input.value.trim();
+      if (!userMessage || isLoading) return;
+
+      // Limpar estado inicial
+      if (welcomeMessage) {
+        welcomeMessage.remove();
+      }
+
+      // Adicionar mensagem do utilizador
+      input.value = '';
+      submitBtn.disabled = true;
+      input.disabled = true;
+      isLoading = true;
+
+      messagesList.appendChild(createMessageElement('user', userMessage));
+      
+      const loadingEl = createLoadingElement();
+      messagesList.appendChild(loadingEl);
+      lucide.createIcons();
+      scrollToBottom();
+
+      try {
+        const response = await fetch('/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: userMessage })
+        });
+
+        if (!response.ok) {
+          throw new Error('Erro na resposta do servidor');
+        }
+
+        const data = await response.json();
+        const botResponse = data.answer || 'Resposta do servidor recebida com sucesso.';
+
+        loadingEl.remove();
+        messagesList.appendChild(createMessageElement('model', botResponse));
+
+      } catch (error) {
+        console.error('Erro na requisição:', error);
+        loadingEl.remove();
+        messagesList.appendChild(createMessageElement('model', 'Erro de comunicação com o servidor local.'));
+      } finally {
+        isLoading = false;
+        input.disabled = false;
+        input.focus();
+        scrollToBottom();
+      }
+    });
+  </script>
+</body>
+</html>
