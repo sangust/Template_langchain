@@ -30,7 +30,6 @@ async def chat_endpoint(request: Request, body: ChatRequest, response: Response)
         result = chat(
             message=body.message,
             system_prompt=ollama_system_prompt,
-            temperature=settings.ollama_temperature,
             history=history
         )
         add_message(session_id, "user", body.message)

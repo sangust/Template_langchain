@@ -4,3 +4,5 @@ __pycache__
 *.log
 .env
 llama.env
+pytest_cache/
+poetry.lock
