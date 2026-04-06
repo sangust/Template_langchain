@@ -18,7 +18,8 @@ dependencies = [
     "langchain-core (>=1.2.24,<2.0.0)",
     "langchain-ollama (>=1.0.1,<2.0.0)",
     "jinja2 (>=3.1.6,<4.0.0)",
-    "ollama (>=0.6.1,<0.7.0)"
+    "ollama (>=0.6.1,<0.7.0)",
+    "redis (>=7.4.0,<8.0.0)"
 ]
 
 [tool.poetry]

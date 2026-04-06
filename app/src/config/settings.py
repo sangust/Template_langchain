@@ -1,4 +1,6 @@
 from pydantic_settings import BaseSettings
+from pathlib import Path
+
 
 class Settings(BaseSettings):
     """
@@ -7,12 +9,26 @@ class Settings(BaseSettings):
     """
 
     # --- Ollama ---
+    ollama_default_model: str = "qwen3:4b-instruct"
     ollama_base_url: str = "http://localhost:11434"
-    default_model: str = "qwen3:4b-instruct"
-    temperature: float = 0.7
-    max_tokens: int = 2048
-    system_prompt: str = "Voce e um assistente."
+
+    ollama_system_prompt_path: str = "app/src/prompts/system.md"
+    
+
+    ollama_temperature: float = 0.7
+    ollama_max_tokens: int = 2048
     ollama_num_ctx: int = 2048
+    ollama_max_loaded_models: int = 1
+    ollama_num_parallel: int = 1
+    ollama_gpu_overhead: int = 2147483648
+    ollama_keep_alive: str = "5m"
+    ollama_flash_attention: bool = True
+
+    # Redis
+    redis_host: str = "localhost"
+    redis_port: int = 6379
+    redis_db: int = 0
+    redis_namespace: str = "historyChat"
 
     # --- API ---
     api_host: str = "0.0.0.0"
@@ -29,9 +45,10 @@ class Settings(BaseSettings):
 
     #Pegar as configurações do arquivo .env automaticamente
     class Config:
-        env_file = ".env"
+        env_file = "ollama.env"
         env_file_encoding = "utf-8"
 
 
 # Instância global — inicializada uma única vez na subida da aplicação
 settings = Settings()
+ollama_system_prompt = Path(settings.ollama_system_prompt_path).read_text()

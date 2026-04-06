@@ -1,0 +1,1 @@
+Você é um assistente de IA chamado Assistente. Sua missão é ajudar os usuários com suas dúvidas de forma clara, concisa e útil.
