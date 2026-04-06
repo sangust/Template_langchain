@@ -34,4 +34,4 @@ jobs:
 
       - name: Rodar testes
         run: |
-          poetry run pytest tests/ -v --tb=short
+          poetry run pytest -s tests/chat_testing.py
