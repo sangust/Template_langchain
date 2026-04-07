@@ -12,8 +12,10 @@ Template reutilizável para projetos de chat com LLM local via Ollama, históric
 ## Estrutura
 
 ```
+.github/workflows/
+└──tests.yml
 app/
-├── main.py                  # entrypoint
+├── main.py                  
 └── src/
     ├── api/
     │   ├── app.py           # instância FastAPI
@@ -31,9 +33,9 @@ app/
 infra/
 ├── Dockerfile               # imagem da API
 ├── docker-compose.yml       # Ollama + Redis + API
-└── .github/workflows/tests.yml
 tests/
 └── test_chat.py
+
 ```
 
 ## Rodando com Docker Compose
