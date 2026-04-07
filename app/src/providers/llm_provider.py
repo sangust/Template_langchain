@@ -1,9 +1,9 @@
 from langchain_ollama import ChatOllama
-from app.src.config.settings import settings, ollama_system_prompt
+from app.src.config.settings import settings
 from functools import lru_cache
 
 @lru_cache(maxsize=8)
-def get_llm(model: str | None = None) -> ChatOllama:
+def get_llm(model: str = settings.ollama_default_model) -> ChatOllama:
     """
     Retorna uma instância do LLM conectada ao Ollama local.
  
@@ -17,12 +17,12 @@ def get_llm(model: str | None = None) -> ChatOllama:
     novas instâncias do LLM).
  
     Args:
-        model: Nome do modelo. Se None, usa OLLAMA_DEFAULT_MODEL do .env.
+        model: Nome do modelo.
  
     Returns:
         Instância configurada do ChatOllama.
     """
-    llm_model = model if model is not None else settings.ollama_default_model
+    llm_model = model
 
     return ChatOllama(
         model=llm_model,
@@ -30,4 +30,6 @@ def get_llm(model: str | None = None) -> ChatOllama:
         base_url=settings.ollama_base_url,
         num_ctx=settings.ollama_num_ctx,
         flash_attention=settings.ollama_flash_attention,
+        timeout=120,
+        num_predict=settings.ollama_max_tokens,
     )

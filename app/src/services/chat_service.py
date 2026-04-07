@@ -1,8 +1,9 @@
 import json
 import logging
+import asyncio
+from functools import partial
  
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage, BaseMessage
-from langchain_ollama import ChatOllama
  
 from app.src.config.settings import settings, ollama_system_prompt
 from app.src.providers.llm_provider import get_llm
@@ -42,10 +43,8 @@ def _build_messages(
 
 
 
-def chat(
+async def chat(
     message: str,
-    model: str | None = None,
-    system_prompt: str = ollama_system_prompt,
     history: list | None = None
 ) -> dict:
     """
@@ -53,46 +52,32 @@ def chat(
 
     Args:
         message: Mensagem do usuário
-        model: Modelo a usar (opcional)
-        system_prompt: System prompt customizado (opcional)
         history: Histórico anterior como lista de dicts {role, content}.
 
     Returns:
         dict com 'answer' (str) e 'model_used' (str).
     """
+    system_prompt = ollama_system_prompt
+    model_name = settings.ollama_default_model
     
-    model_name = model or settings.ollama_default_model
-    try:
-        llm: ChatOllama = get_llm(model=model_name)
-    except Exception as e:
-        logger.error("Error loading LLM: %s", e)
-        raise
-    
-    
-    messages = _build_messages(
-        history=history or [],
-        system_prompt=system_prompt,
-        user_message=message,
-    )
-    response = llm.invoke(messages)
-
-    return {
-        "answer": response.content,
-        "model_used": model_name,
-    }
+    loop = asyncio.get_event_loop()
+    messages = _build_messages(history or [], system_prompt, message)
+    llm = get_llm(model=model_name)
+    response = await loop.run_in_executor(None, partial(llm.invoke, messages))
+    return {"answer": response.content, "model_used": model_name}
 
 
-def add_message(session_id: str, role: str, content: str) -> None:
-    """Persiste uma mensagem no histórico da sessão no Redis."""
+def add_message(session_id, role, content):
     try:
         client = get_redis_client()
         key = f"{settings.redis_namespace}:{session_id}"
-        client.rpush(key, json.dumps({"role": role, "content": content}))
-        client.ltrim(key, -20, -1)     # mantém as últimas 20 mensagens
-        client.expire(key, 1800)       # expira em 30 minutos
+        with client.pipeline() as pipe:
+            pipe.rpush(key, json.dumps({"role": role, "content": content}))
+            pipe.ltrim(key, -20, -1)
+            pipe.expire(key, 1800)
+            pipe.execute()
     except Exception as exc:
-        # Falha no Redis não interrompe a conversa — apenas loga o erro
-        logger.warning("Falha ao salvar mensagem no Redis: %s", exc)
+        logger.warning("Falha ao salvar no Redis: %s", exc)
  
  
 def get_history(session_id: str) -> list[dict]:

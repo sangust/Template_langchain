@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from pathlib import Path
 
 
@@ -18,16 +18,12 @@ class Settings(BaseSettings):
     ollama_temperature: float = 0.7
     ollama_max_tokens: int = 2048
     ollama_num_ctx: int = 2048
-    ollama_max_loaded_models: int = 1
-    ollama_num_parallel: int = 1
-    ollama_gpu_overhead: int = 2147483648
     ollama_keep_alive: str = "5m"
     ollama_flash_attention: bool = True
 
     # Redis
     redis_host: str = "redis"
     redis_port: int = 6379
-    redis_db: int = 0
     redis_namespace: str = "historyChat"
 
     # --- API ---
@@ -44,11 +40,13 @@ class Settings(BaseSettings):
 
 
     #Pegar as configurações do arquivo .env automaticamente
-    class Config:
-        env_file = "ollama.env"
-        env_file_encoding = "utf-8"
+    model_config = SettingsConfigDict(env_file="ollama.env", env_file_encoding="utf-8")
 
 
 # Instância global — inicializada uma única vez na subida da aplicação
 settings = Settings()
-ollama_system_prompt = Path(settings.ollama_system_prompt_path).read_text()
+
+try:
+    ollama_system_prompt = Path(settings.ollama_system_prompt_path).read_text(encoding="utf-8")
+except FileNotFoundError:
+    ollama_system_prompt = "Você é um assistente útil."

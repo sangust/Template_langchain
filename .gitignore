@@ -5,8 +5,7 @@ __pycache__
 .env
 llama.env
 pytest_cache/
-poetry.lock
 .gitignore
-ollama.env
+
 llama_cache/
 .Dockerignore

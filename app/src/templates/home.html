@@ -1,54 +1,96 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
+<html lang="pt-PT" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Interface de Chat IA</title>
+  <title>SantanaBot</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Ícones Lucide -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            claude: {
+              dark: '#2C2B29',
+              surface: '#3E3C38',
+              border: '#4D4B46',
+              text: '#E5E4E2',
+              light: '#FFFFFF',
+              lightSurface: '#F3F4F6'
+            }
+          }
+        }
+      }
+    }
+  </script>
 </head>
-<body class="flex flex-col h-screen bg-white text-gray-900 font-sans">
+<body class="flex flex-col h-screen bg-white dark:bg-claude-dark text-gray-900 dark:text-claude-text font-sans transition-colors duration-200">
+
+  <!-- Header -->
+  <header class="flex justify-between items-center w-full max-w-3xl mx-auto px-4 py-4 shrink-0">
+    <div class="flex items-center gap-2 text-lg font-medium text-gray-800 dark:text-claude-text select-none">
+      <i data-lucide="bot" class="w-6 h-6"></i>
+      <span>SantanaBot</span>
+    </div>
+    <button id="theme-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-claude-surface transition-colors text-gray-600 dark:text-gray-300">
+      <i data-lucide="sun" id="theme-icon-light" class="w-5 h-5 hidden dark:block"></i>
+      <i data-lucide="moon" id="theme-icon-dark" class="w-5 h-5 block dark:hidden"></i>
+    </button>
+  </header>
 
   <!-- Área Principal de Mensagens -->
   <main class="flex-1 overflow-y-auto" id="chat-container">
-    <div class="max-w-3xl mx-auto w-full px-4 pt-12 pb-36 flex flex-col gap-8" id="messages-list">
+    <div class="max-w-3xl mx-auto w-full px-4 pt-8 pb-36 flex flex-col gap-8" id="messages-list">
       
       <!-- Mensagem Inicial -->
-      <div id="welcome-message" class="flex flex-col items-center justify-center h-[50vh] text-center">
-        <h1 class="text-2xl font-semibold text-gray-800 mb-2">Como posso ajudar hoje?</h1>
+      <div id="welcome-message" class="flex flex-col items-center justify-center h-[40vh] text-center gap-4">
+        <div class="w-16 h-16 bg-gray-100 dark:bg-claude-surface rounded-2xl flex items-center justify-center shadow-sm">
+          <i data-lucide="bot" class="w-8 h-8 text-gray-700 dark:text-claude-text"></i>
+        </div>
+        <h1 class="text-2xl font-semibold text-gray-800 dark:text-claude-text">Como posso ajudar hoje?</h1>
       </div>
 
     </div>
   </main>
 
   <!-- Área de Input Fixa no Rodapé -->
-  <div class="fixed bottom-0 w-full bg-gradient-to-t from-white via-white to-transparent pt-10 pb-6 px-4">
+  <div class="fixed bottom-0 w-full bg-gradient-to-t from-white via-white to-transparent dark:from-claude-dark dark:via-claude-dark dark:to-transparent pt-10 pb-6 px-4">
     <div class="max-w-3xl mx-auto w-full relative">
-      <form id="chat-form" class="relative flex items-end bg-gray-50 border border-gray-200 rounded-3xl overflow-hidden focus-within:ring-1 focus-within:ring-gray-300 focus-within:bg-white transition-all shadow-sm">
+      <form id="chat-form" class="relative flex items-end bg-claude-lightSurface dark:bg-claude-surface border border-gray-200 dark:border-claude-border rounded-2xl overflow-hidden focus-within:ring-1 focus-within:ring-gray-300 dark:focus-within:ring-gray-500 transition-all shadow-sm">
         <textarea
           id="chat-input"
-          placeholder="Envie uma mensagem ao modelo..."
+          placeholder="Envie uma mensagem ao SantanaBot..."
           rows="1"
-          class="w-full max-h-48 bg-transparent pl-5 pr-14 py-4 outline-none text-gray-800 placeholder-gray-500 resize-none disabled:opacity-50"
+          class="w-full max-h-48 bg-transparent pl-4 pr-12 py-4 outline-none text-gray-800 dark:text-claude-text placeholder-gray-500 dark:placeholder-gray-400 resize-none disabled:opacity-50"
           style="min-height: 56px;"
         ></textarea>
         <button
           type="submit"
           id="submit-button"
           disabled
-          class="absolute right-3 bottom-3 p-2 bg-black text-white rounded-full hover:bg-gray-800 disabled:bg-gray-300 disabled:text-gray-500 transition-colors flex items-center justify-center"
+          class="absolute right-2 bottom-2 p-2 bg-black text-white dark:bg-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 disabled:bg-gray-300 dark:disabled:bg-claude-border disabled:text-gray-500 dark:disabled:text-gray-400 transition-colors flex items-center justify-center"
         >
-          <i data-lucide="arrow-up" class="w-4 h-4"></i>
+          <i data-lucide="arrow-up" class="w-5 h-5"></i>
         </button>
       </form>
-      <div class="text-center text-xs text-gray-400 mt-3">
+      <div class="text-center text-xs text-gray-400 mt-3 dark:text-gray-500">
         A IA pode cometer erros. Verifique informações importantes.
       </div>
     </div>
   </div>
 
   <script>
+    // Configuração de Tema
+    const htmlElement = document.documentElement;
+    const themeToggle = document.getElementById('theme-toggle');
+    
+    themeToggle.addEventListener('click', () => {
+      htmlElement.classList.toggle('dark');
+    });
+
     // Inicializar ícones
     lucide.createIcons();
 
@@ -64,6 +106,9 @@
     // Ajuste de estado do botão
     input.addEventListener('input', () => {
       submitBtn.disabled = !input.value.trim() || isLoading;
+      // Auto-resize do textarea
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 192) + 'px';
     });
 
     // Submeter com Enter (sem Shift)
@@ -89,14 +134,19 @@
       
       if (role === 'user') {
         div.innerHTML = `
-          <div class="bg-gray-100 text-gray-900 px-5 py-3 rounded-3xl max-w-[80%] break-words">
+          <div class="bg-gray-100 dark:bg-claude-surface text-gray-900 dark:text-claude-text px-5 py-3 rounded-2xl max-w-[80%] break-words">
             ${escapeHTML(text)}
           </div>
         `;
       } else {
         div.innerHTML = `
-          <div class="w-full max-w-3xl text-gray-800 leading-relaxed whitespace-pre-wrap break-words px-2">
-            ${escapeHTML(text)}
+          <div class="flex gap-4 w-full max-w-3xl text-gray-800 dark:text-claude-text leading-relaxed whitespace-pre-wrap break-words px-2">
+            <div class="w-8 h-8 rounded flex items-center justify-center shrink-0">
+              <i data-lucide="bot" class="w-6 h-6"></i>
+            </div>
+            <div class="pt-1 w-full overflow-hidden">
+              ${escapeHTML(text)}
+            </div>
           </div>
         `;
       }
@@ -106,8 +156,15 @@
     function createLoadingElement() {
       const div = document.createElement('div');
       div.id = 'loading-indicator';
-      div.className = 'flex w-full justify-start px-2';
-      div.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin text-gray-400"></i>`;
+      div.className = 'flex gap-4 w-full justify-start px-2';
+      div.innerHTML = `
+        <div class="w-8 h-8 rounded flex items-center justify-center shrink-0">
+          <i data-lucide="bot" class="w-6 h-6"></i>
+        </div>
+        <div class="pt-1 flex items-center">
+          <i data-lucide="loader-2" class="w-5 h-5 animate-spin text-gray-400"></i>
+        </div>
+      `;
       return div;
     }
 
@@ -132,6 +189,9 @@
       if (welcomeMessage) {
         welcomeMessage.remove();
       }
+
+      // Reset textarea height
+      input.style.height = 'auto';
 
       // Adicionar mensagem do utilizador
       input.value = '';
@@ -168,6 +228,7 @@
         loadingEl.remove();
         messagesList.appendChild(createMessageElement('model', 'Erro de comunicação com o servidor local.'));
       } finally {
+        lucide.createIcons();
         isLoading = false;
         input.disabled = false;
         input.focus();

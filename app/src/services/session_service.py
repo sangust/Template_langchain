@@ -5,5 +5,10 @@ def get_session_id(request: Request, response: Response):
     session_id = request.cookies.get("session_id")
     if not session_id:
         session_id = str(uuid.uuid4())
-        response.set_cookie("session_id", session_id)
+        response.set_cookie(
+            "session_id", session_id,
+            httponly=True,
+            samesite="lax",
+            max_age=1800,
+        )
     return session_id
