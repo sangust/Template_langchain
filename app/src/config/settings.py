@@ -10,7 +10,7 @@ class Settings(BaseSettings):
 
     # --- Ollama ---
     ollama_default_model: str = "qwen3:4b-instruct"
-    ollama_base_url: str = "http://localhost:11434"
+    ollama_base_url: str = "http://ollama:11434"
 
     ollama_system_prompt_path: str = "app/src/prompts/system.md"
     
@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     ollama_flash_attention: bool = True
 
     # Redis
-    redis_host: str = "localhost"
+    redis_host: str = "redis"
     redis_port: int = 6379
     redis_db: int = 0
     redis_namespace: str = "historyChat"

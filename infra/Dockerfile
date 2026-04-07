@@ -23,12 +23,12 @@ RUN poetry install --no-root
 # Estágio 2: Runtime
 FROM python:3.12-slim AS runtime
 
-WORKDIR /app
+WORKDIR /template_langchain
 
 # Copia o ambiente virtual do estágio de build
 COPY --from=builder /app/.venv /app/.venv
 ENV PATH="/app/.venv/bin:$PATH"
 
-COPY . .
+COPY app/ /template_langchain/app
 
 CMD ["python", "-m", "app.main"]
