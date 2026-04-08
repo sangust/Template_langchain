@@ -7,7 +7,9 @@ class Settings(BaseSettings):
     Configurações gerais da aplicação.
     Todas as variáveis podem ser sobrescritas via arquivo .env
     """
-
+    # --- Environment ---
+    environment: str = "development"
+    
     # --- Ollama ---
     ollama_default_model: str = "qwen3:4b-instruct"
     ollama_base_url: str = "http://ollama:11434"

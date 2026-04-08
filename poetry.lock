@@ -1099,6 +1099,23 @@ dev = ["pre-commit", "tox"]
 testing = ["coverage", "pytest", "pytest-benchmark"]
 
 [[package]]
+name = "prometheus-client"
+version = "0.24.1"
+description = "Python client for the Prometheus monitoring system."
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "prometheus_client-0.24.1-py3-none-any.whl", hash = "sha256:150db128af71a5c2482b36e588fc8a6b95e498750da4b17065947c16070f4055"},
+    {file = "prometheus_client-0.24.1.tar.gz", hash = "sha256:7e0ced7fbbd40f7b84962d5d2ab6f17ef88a72504dcf7c0b40737b43b2a461f9"},
+]
+
+[package.extras]
+aiohttp = ["aiohttp"]
+django = ["django"]
+twisted = ["twisted"]
+
+[[package]]
 name = "pydantic"
 version = "2.12.5"
 description = "Data validation using Python type hints"
@@ -1647,6 +1664,21 @@ typing-extensions = {version = ">=4.10.0", markers = "python_version < \"3.13\""
 
 [package.extras]
 full = ["httpx (>=0.27.0,<0.29.0)", "itsdangerous", "jinja2", "python-multipart (>=0.0.18)", "pyyaml"]
+
+[[package]]
+name = "structlog"
+version = "25.5.0"
+description = "Structured Logging for Python"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "structlog-25.5.0-py3-none-any.whl", hash = "sha256:a8453e9b9e636ec59bd9e79bbd4a72f025981b3ba0f5837aebf48f02f37a7f9f"},
+    {file = "structlog-25.5.0.tar.gz", hash = "sha256:098522a3bebed9153d4570c6d0288abf80a031dfdb2048d59a49e9dc2190fc98"},
+]
+
+[package.dependencies]
+typing-extensions = {version = "*", markers = "python_version < \"3.11\""}
 
 [[package]]
 name = "tenacity"
@@ -2282,5 +2314,5 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.10, <4.0, <3.14"
-content-hash = "3931aee0f76dd67db907e94b42a55a5d5de6d8277bbafed12896cc1accee101e"
+python-versions = ">=3.10, <3.14"
+content-hash = "a58da9476b41b41a68f97a18f643c8833e377e52b67d2d797cc25332eee79e9b"

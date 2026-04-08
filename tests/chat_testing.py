@@ -24,7 +24,7 @@ def client():
     """Cliente HTTP do FastAPI sem dependências externas."""
     # Impede que o redis_provider tente conectar ao Redis ao ser importado
     with patch("redis.ConnectionPool"), patch("redis.Redis"):
-        from app.src.api.app import app
+        from app.api.app import app
         return TestClient(app, raise_server_exceptions=False)
 
 
@@ -214,10 +214,10 @@ class TestRedisHistory:
 class TestChatEndpoint:
     """Testa o endpoint POST / com dependências mockadas corretamente."""
 
-    @patch("app.src.api.routes.home.get_session_id")
-    @patch("app.src.api.routes.home.get_history")
-    @patch("app.src.api.routes.home.add_message")
-    @patch("app.src.api.routes.home.chat")
+    @patch("app.api.routes.home.get_session_id")
+    @patch("app.api.routes.home.get_history")
+    @patch("app.api.routes.home.add_message")
+    @patch("app.api.routes.home.chat")
     def test_endpoint_retorna_200(
         self,
         mock_chat,
@@ -234,7 +234,7 @@ class TestChatEndpoint:
         }
 
         with patch("redis.ConnectionPool"), patch("redis.Redis"):
-            from app.src.api.app import app
+            from app.api.app import app
             c = TestClient(app)
             resp = c.post("/", json={"message": "Capital do Brasil?"})
 
@@ -243,19 +243,19 @@ class TestChatEndpoint:
         assert body["answer"] == "Brasília"
         assert "model_used" in body
 
-    @patch("app.src.api.routes.home.get_session_id")
+    @patch("app.api.routes.home.get_session_id")
     def test_endpoint_mensagem_vazia_retorna_422(self, mock_get_session_id):
         mock_get_session_id.return_value = "sessao-teste"
 
         with patch("redis.ConnectionPool"), patch("redis.Redis"):
-            from app.src.api.app import app
+            from app.api.app import app
             c = TestClient(app)
             resp = c.post("/", json={"message": ""})
 
         assert resp.status_code == 422
 
-    @patch("app.src.api.routes.home.get_session_id")
-    @patch("app.src.api.routes.home.chat")
+    @patch("app.api.routes.home.get_session_id")
+    @patch("app.api.routes.home.chat")
     def test_endpoint_llm_offline_retorna_500(
         self,
         mock_chat,
@@ -265,7 +265,7 @@ class TestChatEndpoint:
         mock_chat.side_effect = ConnectionError("Ollama offline")
 
         with patch("redis.ConnectionPool"), patch("redis.Redis"):
-            from app.src.api.app import app
+            from app.api.app import app
             c = TestClient(app, raise_server_exceptions=False)
             resp = c.post("/", json={"message": "teste"})
 

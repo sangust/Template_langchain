@@ -6,10 +6,10 @@ authors = [
     {name = "santana",email = "sannt11na@sempreceub.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.10, <4.0, <3.14"
+requires-python = ">=3.10, <3.14"
 dependencies = [
     "langchain (>=1.2.14,<2.0.0)",
-    "fastapi (>=0.135.2,<0.136.0)",
+    "fastapi (>=0.135.2)",
     "uvicorn (>=0.42.0,<0.43.0)",
     "pydantic (>=2.12.5,<3.0.0)",
     "python-dotenv (>=1.2.2,<2.0.0)",
@@ -22,7 +22,9 @@ dependencies = [
     "redis (>=7.4.0,<8.0.0)",
     "pytest (>=9.0.2,<10.0.0)",
     "slowapi (>=0.1.9,<0.2.0)",
-    "asyncio (>=4.0.0,<5.0.0)"
+    "asyncio (>=4.0.0,<5.0.0)",
+    "prometheus-client (>=0.24.1,<0.25.0)",
+    "structlog (>=25.5.0,<26.0.0)"
 ]
 
 [tool.poetry]
