@@ -8,9 +8,9 @@ class ChatRequest(BaseModel):
     message: str = Field(..., description="Mensagem do usuário", min_length=1)
     
     # RAG
-    use_rag: bool | None = Field(
-        default=None,
-        description="Ativar RAG para esta requisição. Se None, usa RAG_ENABLED do .env"
+    use_rag: bool = Field(
+        default=False,
+        description="Ativar/Desativar RAG para esta requisição"
     )
     
     # Exemplo de uso para documentação da API no Swagger

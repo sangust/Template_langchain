@@ -35,10 +35,19 @@
       <i data-lucide="bot" class="w-6 h-6"></i>
       <span>SantanaBot</span>
     </div>
-    <button id="theme-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-claude-surface transition-colors text-gray-600 dark:text-gray-300">
-      <i data-lucide="sun" id="theme-icon-light" class="w-5 h-5 hidden dark:block"></i>
-      <i data-lucide="moon" id="theme-icon-dark" class="w-5 h-5 block dark:hidden"></i>
-    </button>
+    
+    <div class="flex items-center gap-3">
+      <!-- Botão RAG Toggle -->
+      <button id="rag-toggle" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-300 dark:border-claude-border text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-claude-surface transition-colors">
+        <i data-lucide="database" class="w-4 h-4"></i>
+        <span id="rag-status">RAG: Off</span>
+      </button>
+
+      <button id="theme-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-claude-surface transition-colors text-gray-600 dark:text-gray-300">
+        <i data-lucide="sun" id="theme-icon-light" class="w-5 h-5 hidden dark:block"></i>
+        <i data-lucide="moon" id="theme-icon-dark" class="w-5 h-5 block dark:hidden"></i>
+      </button>
+    </div>
   </header>
 
   <!-- Área Principal de Mensagens -->
@@ -89,6 +98,24 @@
     
     themeToggle.addEventListener('click', () => {
       htmlElement.classList.toggle('dark');
+    });
+
+    // Configuração do RAG Toggle
+    let isRagActive = false;
+    const ragToggleBtn = document.getElementById('rag-toggle');
+    const ragStatusText = document.getElementById('rag-status');
+
+    ragToggleBtn.addEventListener('click', () => {
+      isRagActive = !isRagActive;
+      if (isRagActive) {
+        ragToggleBtn.classList.remove('text-gray-500', 'dark:text-gray-400');
+        ragToggleBtn.classList.add('text-blue-600', 'dark:text-blue-400', 'border-blue-500');
+        ragStatusText.textContent = 'RAG: On';
+      } else {
+        ragToggleBtn.classList.remove('text-blue-600', 'dark:text-blue-400', 'border-blue-500');
+        ragToggleBtn.classList.add('text-gray-500', 'dark:text-gray-400');
+        ragStatusText.textContent = 'RAG: Off';
+      }
     });
 
     // Inicializar ícones
@@ -206,11 +233,17 @@
       lucide.createIcons();
       scrollToBottom();
 
+      // Montar o payload conforme a ativação do botão RAG
+      const requestPayload = { message: userMessage };
+      if (isRagActive) {
+        requestPayload.use_rag = true;
+      }
+
       try {
         const response = await fetch('/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: userMessage })
+          body: JSON.stringify(requestPayload)
         });
 
         if (!response.ok) {

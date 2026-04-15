@@ -24,7 +24,10 @@ dependencies = [
     "slowapi (>=0.1.9,<0.2.0)",
     "asyncio (>=4.0.0,<5.0.0)",
     "prometheus-client (>=0.24.1,<0.25.0)",
-    "structlog (>=25.5.0,<26.0.0)"
+    "structlog (>=25.5.0,<26.0.0)",
+    "langchain-chroma (>=1.1.0,<2.0.0)",
+    "langchain-community (>=0.4.1,<0.5.0)",
+    "langchain-text-splitters (>=1.1.1,<2.0.0)",
 ]
 
 [tool.poetry]

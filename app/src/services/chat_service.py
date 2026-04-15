@@ -2,7 +2,7 @@ import json
 import logging
 import asyncio
 from functools import partial
-
+from app.src.services.rag_service import retrieve_context
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage, BaseMessage
 
 from app.src.config.settings import settings, ollama_system_prompt
@@ -50,7 +50,8 @@ def _build_messages(
 async def chat(
     message: str,
     history: list | None = None,
-    session_id: str = "unknown"
+    session_id: str = "unknown",
+    use_rag: bool = False
 ) -> dict:
     """
     Envia uma mensagem ao LLM e retorna a resposta.
@@ -59,6 +60,7 @@ async def chat(
         message: Mensagem do usuário
         history: Histórico anterior como lista de dicts {role, content}.
         session_id: ID da sessão para logging
+        use_rag: Se deve usar RAG para buscar contexto
 
     Returns:
         dict com 'answer' (str) e 'model_used' (str).
@@ -69,8 +71,24 @@ async def chat(
     """
     system_prompt = ollama_system_prompt
     model_name = settings.ollama_default_model
+    is_rag_active = use_rag
     
     try:
+        if is_rag_active:
+            history = history[-2:]
+            logger.info("RAG está ativo")
+            context_text = await retrieve_context(message)
+            if context_text:
+                message = f"""
+                Use o contexto abaixo para responder à pergunta.
+
+                Contexto:
+                {context_text}
+
+                Pergunta:
+                {message}
+                """
+                
         logger.info(
             "chat_request_started",
             session_id=session_id,

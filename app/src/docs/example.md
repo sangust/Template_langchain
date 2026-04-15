@@ -1,0 +1,7 @@
+A Afilibot é uma empresa especializada no desenvolvimento de soluções automatizadas para distribuição de ofertas com links de afiliado, com foco em eficiência operacional e monetização escalável. Seus serviços são estruturados para atender operações que demandam coleta contínua de dados, processamento inteligente e entrega automatizada de conteúdo promocional.
+
+A empresa oferece a implementação de bots para plataformas como Telegram, capazes de monitorar fontes pré-definidas — incluindo lojas, categorias e páginas específicas — e identificar produtos relevantes com base em critérios configuráveis. Esses bots realizam a extração estruturada das informações, aplicam automaticamente os links de afiliado e distribuem os conteúdos em grupos ou canais, de forma padronizada e com baixa latência.
+
+Além disso, a Afilibot integra mecanismos de controle e previsibilidade operacional, permitindo agendamento de execuções, definição de regras de filtragem e organização do fluxo de envio. A arquitetura é projetada para suportar execução contínua em ambiente de produção, com foco em estabilidade e manutenção simplificada.
+
+Os serviços contemplam desde a configuração inicial da infraestrutura até a entrega de uma solução pronta para operação, reduzindo a necessidade de intervenção manual e aumentando a consistência na divulgação de ofertas. O objetivo central é transformar processos manuais e dispersos em um pipeline automatizado, orientado a performance e escalabilidade.

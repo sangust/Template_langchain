@@ -52,7 +52,8 @@ async def chat_endpoint(request: Request, body: ChatRequest, response: Response)
         result = await chat(
             message=body.message,
             history=history,
-            session_id=session_id
+            session_id=session_id,
+            use_rag=body.use_rag
         )
         
         # Salvar mensagens no histórico
