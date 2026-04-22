@@ -7,6 +7,7 @@ from app.src.config.logging import get_logger
 from app.src.services.session_service import get_session_id
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+from fastapi.responses import StreamingResponse
 
 logger = get_logger(__name__)
 limiter = Limiter(key_func=get_remote_address)
@@ -22,91 +23,67 @@ async def home_page(request: Request):
     return templates.TemplateResponse(request, "home.html", {"request": request})
 
 
-@home.post("/", response_model=ChatResponse)
+@home.post("/")
 @limiter.limit("10/minute")
-async def chat_endpoint(request: Request, body: ChatRequest, response: Response) -> ChatResponse:
-    """
-    Envia uma mensagem ao LLM e retorna a resposta.
+async def chat_endpoint(request: Request, body: ChatRequest, response: Response):
 
-    Você pode customizar:
-    - **message**: conteúdo da mensagem
-    - **use_rag**: ativar RAG (opcional)
-    """
     session_id = None
-    
+
     try:
         session_id = get_session_id(request, response)
-        client_ip = request.client.host if request.client else "unknown"
-        
-        logger.info(
-            "chat_endpoint_request",
-            session_id=session_id,
-            client_ip=client_ip,
-            message_length=len(body.message)
-        )
-        
-        # Recuperar histórico
         history = get_history(session_id)
-        
-        # Chamar serviço de chat
-        result = await chat(
-            message=body.message,
-            history=history,
-            session_id=session_id,
-            use_rag=body.use_rag
-        )
-        
-        # Salvar mensagens no histórico
+
         add_message(session_id, "user", body.message)
-        add_message(session_id, "assistant", result["answer"])
-        
-        logger.info(
-            "chat_endpoint_success",
-            session_id=session_id,
-            model=result["model_used"],
-            response_length=len(result["answer"])
+
+        async def generate():
+            parts = []
+
+            try:
+                async for chunk in chat(
+                    message=body.message,
+                    history=history,
+                    session_id=session_id,
+                    use_rag=body.use_rag
+                ):
+                    parts.append(chunk)
+
+                    # SSE correto
+                    yield f"data: {chunk}\n\n"
+
+                # sinal opcional de fim
+                yield "event: end\ndata: [DONE]\n\n"
+
+            except asyncio.CancelledError:
+                logger.warning(
+                    "client_disconnected",
+                    session_id=session_id
+                )
+                raise
+
+            finally:
+                if parts:
+                    full_message = "".join(parts)
+                    add_message(session_id, "assistant", full_message)
+
+                    logger.info(
+                        "chat_persisted",
+                        session_id=session_id,
+                        response_length=len(full_message)
+                    )
+
+        return StreamingResponse(
+            generate(),
+            media_type="text/event-stream"
         )
-        
-        return ChatResponse(**result)
-        
+
     except ValueError as e:
-        logger.warning(
-            "chat_endpoint_validation_error",
-            session_id=session_id,
-            error=str(e)
-        )
         raise HTTPException(status_code=400, detail=str(e))
-        
-    except ConnectionError as e:
-        logger.error(
-            "chat_endpoint_connection_error",
-            session_id=session_id,
-            error=str(e)
-        )
-        raise HTTPException(
-            status_code=503,
-            detail="LLM service temporarily unavailable"
-        )
-        
-    except TimeoutError as e:
-        logger.error(
-            "chat_endpoint_timeout",
-            session_id=session_id,
-            error=str(e)
-        )
-        raise HTTPException(
-            status_code=504,
-            detail="LLM response timeout"
-        )
-        
-    except Exception as e:
-        logger.error(
-            "chat_endpoint_unexpected_error",
-            session_id=session_id,
-            error=str(e),
-            exc_info=True
-        )
-        raise HTTPException(
-            status_code=500,
-            detail="Internal server error"
-        )
+
+    except ConnectionError:
+        raise HTTPException(status_code=503, detail="LLM unavailable")
+
+    except TimeoutError:
+        raise HTTPException(status_code=504, detail="Timeout")
+
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal error")

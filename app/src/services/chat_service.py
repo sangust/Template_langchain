@@ -1,10 +1,8 @@
-import json
-import logging
 import asyncio
-from functools import partial
-from app.src.services.rag_service import retrieve_context
+from typing import AsyncGenerator
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage, BaseMessage
 
+from app.src.services.rag_service import retrieve_context
 from app.src.config.settings import settings, ollama_system_prompt
 from app.src.config.logging import get_logger
 from app.src.config.metrics import (
@@ -13,26 +11,15 @@ from app.src.config.metrics import (
     ollama_requests_total,
 )
 from app.src.providers.llm_provider import get_llm
-from app.src.providers.redis_provider import get_redis_client
 
 logger = get_logger(__name__)
+
 
 def _build_messages(
     history: list[dict],
     system_prompt: str,
     user_message: str,
 ) -> list[BaseMessage]:
-    """
-    Converte o histórico (lista de dicts {role, content}) em objetos LangChain
-    e monta a lista final de mensagens para o LLM.
-
-    Estrutura esperada pelo Ollama/LangChain:
-        SystemMessage  ← aparece uma única vez, no início
-        HumanMessage   ← turno do usuário
-        AIMessage      ← turno do assistente
-        ...
-        HumanMessage   ← mensagem atual
-    """
     messages: list[BaseMessage] = [SystemMessage(content=system_prompt)]
 
     for entry in history:
@@ -52,108 +39,65 @@ async def chat(
     history: list | None = None,
     session_id: str = "unknown",
     use_rag: bool = False
-) -> dict:
-    """
-    Envia uma mensagem ao LLM e retorna a resposta.
+) -> AsyncGenerator[str, None]:
 
-    Args:
-        message: Mensagem do usuário
-        history: Histórico anterior como lista de dicts {role, content}.
-        session_id: ID da sessão para logging
-        use_rag: Se deve usar RAG para buscar contexto
-
-    Returns:
-        dict com 'answer' (str) e 'model_used' (str).
-    
-    Raises:
-        ConnectionError: Se Ollama estiver offline
-        TimeoutError: Se resposta exceder timeout
-    """
     system_prompt = ollama_system_prompt
     model_name = settings.ollama_default_model
-    is_rag_active = use_rag
-    
+
     try:
-        if is_rag_active:
-            history = history[-2:]
-            logger.info("RAG está ativo")
+        if use_rag:
+            history = (history or [])[-2:]
             context_text = await retrieve_context(message)
             if context_text:
-                message = f"""
-                Use o contexto abaixo para responder à pergunta.
+                message = f"Contexto:\n{context_text}\n\nPergunta:\n{message}"
 
-                Contexto:
-                {context_text}
-
-                Pergunta:
-                {message}
-                """
-                
-        logger.info(
-            "chat_request_started",
-            session_id=session_id,
-            model=model_name,
-            message_length=len(message),
-            history_size=len(history or [])
-        )
-        
-        loop = asyncio.get_event_loop()
         messages = _build_messages(history or [], system_prompt, message)
         llm = get_llm(model=model_name)
-        
-        # Medir tempo de resposta do LLM
-        start_time = asyncio.get_event_loop().time()
-        response = await loop.run_in_executor(None, partial(llm.invoke, messages))
-        end_time = asyncio.get_event_loop().time()
-        duration = end_time - start_time
-        
-        # Registrar métrica
+
+        loop = asyncio.get_running_loop()
+        start_time = loop.time()
+
+        parts = []
+
+        async for chunk in llm.astream(messages):
+            if chunk.content:
+                parts.append(chunk.content)
+                yield chunk.content
+
+        duration = loop.time() - start_time
+
         chat_response_time_seconds.labels(model=model_name).observe(duration)
         ollama_requests_total.labels(model=model_name, status="success").inc()
-        
+
         logger.info(
-            "chat_response_received",
+            "chat_response_completed",
             session_id=session_id,
             model=model_name,
-            response_length=len(response.content),
+            response_length=len("".join(parts)),
             duration_seconds=round(duration, 2)
         )
-        
-        return {
-            "answer": response.content,
-            "model_used": model_name
-        }
-        
-    except ConnectionError as e:
-        logger.error(
-            "chat_ollama_connection_error",
+
+    except asyncio.CancelledError:
+        logger.warning(
+            "chat_stream_cancelled",
             session_id=session_id,
-            model=model_name,
-            error=str(e)
+            model=model_name
         )
+        ollama_requests_total.labels(model=model_name, status="cancelled").inc()
+        raise
+
+    except ConnectionError as e:
         ollama_requests_total.labels(model=model_name, status="error").inc()
         chat_errors_total.labels(error_type="connection").inc()
         raise
-        
+
     except TimeoutError as e:
-        logger.error(
-            "chat_ollama_timeout",
-            session_id=session_id,
-            model=model_name,
-            error=str(e)
-        )
         ollama_requests_total.labels(model=model_name, status="timeout").inc()
         chat_errors_total.labels(error_type="timeout").inc()
         raise
-        
-    except Exception as e:
-        logger.error(
-            "chat_unexpected_error",
-            session_id=session_id,
-            model=model_name,
-            error=str(e),
-            exc_info=True
-        )
+
+    except Exception:
+        ollama_requests_total.labels(model=model_name, status="error").inc()
         chat_errors_total.labels(error_type="unknown").inc()
         raise
 

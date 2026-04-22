@@ -92,182 +92,199 @@
   </div>
 
   <script>
-    // Configuração de Tema
-    const htmlElement = document.documentElement;
-    const themeToggle = document.getElementById('theme-toggle');
-    
-    themeToggle.addEventListener('click', () => {
-      htmlElement.classList.toggle('dark');
-    });
+  // Configuração de Tema
+  const htmlElement = document.documentElement;
+  const themeToggle = document.getElementById('theme-toggle');
+  
+  themeToggle.addEventListener('click', () => {
+    htmlElement.classList.toggle('dark');
+  });
 
-    // Configuração do RAG Toggle
-    let isRagActive = false;
-    const ragToggleBtn = document.getElementById('rag-toggle');
-    const ragStatusText = document.getElementById('rag-status');
+  // Configuração do RAG Toggle
+  let isRagActive = false;
+  const ragToggleBtn = document.getElementById('rag-toggle');
+  const ragStatusText = document.getElementById('rag-status');
 
-    ragToggleBtn.addEventListener('click', () => {
-      isRagActive = !isRagActive;
-      if (isRagActive) {
-        ragToggleBtn.classList.remove('text-gray-500', 'dark:text-gray-400');
-        ragToggleBtn.classList.add('text-blue-600', 'dark:text-blue-400', 'border-blue-500');
-        ragStatusText.textContent = 'RAG: On';
-      } else {
-        ragToggleBtn.classList.remove('text-blue-600', 'dark:text-blue-400', 'border-blue-500');
-        ragToggleBtn.classList.add('text-gray-500', 'dark:text-gray-400');
-        ragStatusText.textContent = 'RAG: Off';
-      }
-    });
-
-    // Inicializar ícones
-    lucide.createIcons();
-
-    const form = document.getElementById('chat-form');
-    const input = document.getElementById('chat-input');
-    const submitBtn = document.getElementById('submit-button');
-    const messagesList = document.getElementById('messages-list');
-    const welcomeMessage = document.getElementById('welcome-message');
-    const chatContainer = document.getElementById('chat-container');
-    
-    let isLoading = false;
-
-    // Ajuste de estado do botão
-    input.addEventListener('input', () => {
-      submitBtn.disabled = !input.value.trim() || isLoading;
-      // Auto-resize do textarea
-      input.style.height = 'auto';
-      input.style.height = Math.min(input.scrollHeight, 192) + 'px';
-    });
-
-    // Submeter com Enter (sem Shift)
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        if (!submitBtn.disabled) {
-          form.dispatchEvent(new Event('submit'));
-        }
-      }
-    });
-
-    function scrollToBottom() {
-      chatContainer.scrollTo({
-        top: chatContainer.scrollHeight,
-        behavior: 'smooth'
-      });
+  ragToggleBtn.addEventListener('click', () => {
+    isRagActive = !isRagActive;
+    if (isRagActive) {
+      ragToggleBtn.classList.remove('text-gray-500', 'dark:text-gray-400');
+      ragToggleBtn.classList.add('text-blue-600', 'dark:text-blue-400', 'border-blue-500');
+      ragStatusText.textContent = 'RAG: On';
+    } else {
+      ragToggleBtn.classList.remove('text-blue-600', 'dark:text-blue-400', 'border-blue-500');
+      ragToggleBtn.classList.add('text-gray-500', 'dark:text-gray-400');
+      ragStatusText.textContent = 'RAG: Off';
     }
+  });
 
-    function createMessageElement(role, text) {
-      const div = document.createElement('div');
-      div.className = `flex w-full ${role === 'user' ? 'justify-end' : 'justify-start'}`;
-      
-      if (role === 'user') {
-        div.innerHTML = `
-          <div class="bg-gray-100 dark:bg-claude-surface text-gray-900 dark:text-claude-text px-5 py-3 rounded-2xl max-w-[80%] break-words">
-            ${escapeHTML(text)}
-          </div>
-        `;
-      } else {
-        div.innerHTML = `
-          <div class="flex gap-4 w-full max-w-3xl text-gray-800 dark:text-claude-text leading-relaxed whitespace-pre-wrap break-words px-2">
-            <div class="w-8 h-8 rounded flex items-center justify-center shrink-0">
-              <i data-lucide="bot" class="w-6 h-6"></i>
-            </div>
-            <div class="pt-1 w-full overflow-hidden">
-              ${escapeHTML(text)}
-            </div>
-          </div>
-        `;
+  lucide.createIcons();
+
+  const form = document.getElementById('chat-form');
+  const input = document.getElementById('chat-input');
+  const submitBtn = document.getElementById('submit-button');
+  const messagesList = document.getElementById('messages-list');
+  const welcomeMessage = document.getElementById('welcome-message');
+  const chatContainer = document.getElementById('chat-container');
+  
+  let isLoading = false;
+
+  input.addEventListener('input', () => {
+    submitBtn.disabled = !input.value.trim() || isLoading;
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 192) + 'px';
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (!submitBtn.disabled) {
+        form.dispatchEvent(new Event('submit'));
       }
-      return div;
     }
+  });
 
-    function createLoadingElement() {
-      const div = document.createElement('div');
-      div.id = 'loading-indicator';
-      div.className = 'flex gap-4 w-full justify-start px-2';
+  function scrollToBottom() {
+    chatContainer.scrollTo({
+      top: chatContainer.scrollHeight,
+      behavior: 'smooth'
+    });
+  }
+
+  function createMessageElement(role, text) {
+    const div = document.createElement('div');
+    div.className = `flex w-full ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+    
+    if (role === 'user') {
       div.innerHTML = `
-        <div class="w-8 h-8 rounded flex items-center justify-center shrink-0">
-          <i data-lucide="bot" class="w-6 h-6"></i>
-        </div>
-        <div class="pt-1 flex items-center">
-          <i data-lucide="loader-2" class="w-5 h-5 animate-spin text-gray-400"></i>
+        <div class="bg-gray-100 dark:bg-claude-surface text-gray-900 dark:text-claude-text px-5 py-3 rounded-2xl max-w-[80%] break-words">
+          ${escapeHTML(text)}
         </div>
       `;
-      return div;
+    } else {
+      div.innerHTML = `
+        <div class="flex gap-4 w-full max-w-3xl text-gray-800 dark:text-claude-text leading-relaxed whitespace-pre-wrap break-words px-2">
+          <div class="w-8 h-8 rounded flex items-center justify-center shrink-0">
+            <i data-lucide="bot" class="w-6 h-6"></i>
+          </div>
+          <div class="pt-1 w-full overflow-hidden"></div>
+        </div>
+      `;
+    }
+    return div;
+  }
+
+  function createLoadingElement() {
+    const div = document.createElement('div');
+    div.id = 'loading-indicator';
+    div.className = 'flex gap-4 w-full justify-start px-2';
+    div.innerHTML = `
+      <div class="w-8 h-8 rounded flex items-center justify-center shrink-0">
+        <i data-lucide="bot" class="w-6 h-6"></i>
+      </div>
+      <div class="pt-1 flex items-center">
+        <i data-lucide="loader-2" class="w-5 h-5 animate-spin text-gray-400"></i>
+      </div>
+    `;
+    return div;
+  }
+
+  function escapeHTML(str) {
+    return str.replace(/[&<>'"]/g, 
+      tag => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          "'": '&#39;',
+          '"': '&quot;'
+      }[tag] || tag)
+    );
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const userMessage = input.value.trim();
+    if (!userMessage || isLoading) return;
+
+    if (welcomeMessage) {
+      welcomeMessage.remove();
     }
 
-    function escapeHTML(str) {
-      return str.replace(/[&<>'"]/g, 
-        tag => ({
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            "'": '&#39;',
-            '"': '&quot;'
-        }[tag] || tag)
-      );
+    input.style.height = 'auto';
+    input.value = '';
+    submitBtn.disabled = true;
+    input.disabled = true;
+    isLoading = true;
+
+    messagesList.appendChild(createMessageElement('user', userMessage));
+    
+    const loadingEl = createLoadingElement();
+    messagesList.appendChild(loadingEl);
+    lucide.createIcons();
+    scrollToBottom();
+
+    const requestPayload = { message: userMessage };
+    if (isRagActive) {
+      requestPayload.use_rag = true;
     }
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const userMessage = input.value.trim();
-      if (!userMessage || isLoading) return;
+    try {
+      const response = await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestPayload)
+      });
 
-      // Limpar estado inicial
-      if (welcomeMessage) {
-        welcomeMessage.remove();
+      if (!response.ok) {
+        throw new Error('Erro na resposta do servidor');
       }
 
-      // Reset textarea height
-      input.style.height = 'auto';
+      loadingEl.remove();
 
-      // Adicionar mensagem do utilizador
-      input.value = '';
-      submitBtn.disabled = true;
-      input.disabled = true;
-      isLoading = true;
-
-      messagesList.appendChild(createMessageElement('user', userMessage));
-      
-      const loadingEl = createLoadingElement();
-      messagesList.appendChild(loadingEl);
+      const botEl = createMessageElement('assistant', '');
+      messagesList.appendChild(botEl);
       lucide.createIcons();
-      scrollToBottom();
 
-      // Montar o payload conforme a ativação do botão RAG
-      const requestPayload = { message: userMessage };
-      if (isRagActive) {
-        requestPayload.use_rag = true;
-      }
+      const textContainer = botEl.querySelector('.pt-1');
 
-      try {
-        const response = await fetch('/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestPayload)
-        });
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
 
-        if (!response.ok) {
-          throw new Error('Erro na resposta do servidor');
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop();
+
+        for (const part of parts) {
+          if (part.startsWith("data: ")) {
+            const chunk = part.replace("data: ", "");
+
+            if (chunk === "[DONE]") continue;
+
+            textContainer.innerHTML += escapeHTML(chunk);
+            scrollToBottom();
+          }
         }
-
-        const data = await response.json();
-        const botResponse = data.answer || 'Resposta do servidor recebida com sucesso.';
-
-        loadingEl.remove();
-        messagesList.appendChild(createMessageElement('model', botResponse));
-
-      } catch (error) {
-        console.error('Erro na requisição:', error);
-        loadingEl.remove();
-        messagesList.appendChild(createMessageElement('model', 'Erro de comunicação com o servidor local.'));
-      } finally {
-        lucide.createIcons();
-        isLoading = false;
-        input.disabled = false;
-        input.focus();
-        scrollToBottom();
       }
-    });
-  </script>
+
+    } catch (error) {
+      console.error('Erro na requisição:', error);
+      loadingEl.remove();
+      messagesList.appendChild(createMessageElement('assistant', 'Erro de comunicação com o servidor local.'));
+    } finally {
+      lucide.createIcons();
+      isLoading = false;
+      input.disabled = false;
+      input.focus();
+      scrollToBottom();
+    }
+  });
+</script>
 </body>
 </html>
